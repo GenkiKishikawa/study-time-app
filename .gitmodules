@@ -1,0 +1,3 @@
+[submodule "study-time-app-frontend"]
+	path = study-time-app-frontend
+	url = git@github.com:GenkiKishikawa/study-time-app-frontend.git
