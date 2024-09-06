@@ -1,0 +1,54 @@
+version: '3'
+services:
+  db:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  web:
+    build:
+      context: .
+      dockerfile: ./deploy/local/nginx/Dockerfile
+    ports:
+      - 8080:80
+    volumes:
+      - ./frontend/react/dist:/var/www/frontend/react/dist
+      - puma-sock:/var/www/backend/tmp/sockets
+
+  api:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/backend
+      - puma-sock:/backend/tmp/sockets
+    environment:
+      RAILS_ENV: development
+      TZ: Asia/Tokyo
+      POSTGRES_HOST: db # 環境変数名の修正
+    command: bundle exec puma -e development
+    tty: true
+    stdin_open: true
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ./frontend
+      dockerfile: ../deploy/local/frontend/Dockerfile
+    ports:
+      - 3001:3001
+    volumes:
+      - ./frontend:/frontend
+    environment:
+      - API_DOMAIN=localhost:8080
+    command: bash -c "cd /frontend/react && yarn install && yarn build"
+
+volumes:
+  postgres_data:
+  puma-sock:
